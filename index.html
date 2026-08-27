@@ -1091,8 +1091,7 @@ async function printRecord(id){
     </div>
     <div class="p-comment">
       <div class="p-comment-label">任用建議（第一關填寫）</div>
-      <div style="margin-bottom:3px;">${hireLines}</div>
-      <div>正式上班日期：${esc(d.startDate) || '（未填寫）'}</div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:nowrap;white-space:nowrap;">${hireLines}<span>｜正式上班日期：${esc(d.startDate) || '（未填寫）'}</span></div>
     </div>
     <div class="p-sign-row">
       ${signCell('interviewer')}
