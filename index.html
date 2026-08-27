@@ -373,7 +373,7 @@ const SALARY_VARIABLE = [
 function emptySalary(){
   const items = {};
   SALARY_VARIABLE.forEach(v => items[v.key] = {checked:false, amount:v.amount});
-  return {baseSalary: null, items};
+  return {baseSalary: null, items, commitment: ""};
 }
 function calcSalaryTotal(sal){
   if(!sal) return 0;
@@ -411,6 +411,10 @@ function buildSalaryEditor(sal, prefix){
         <label>變動項目（勾選適用項目）</label>
         <div class="sal-item-list">${rows}</div>
       </div>
+      <div class="salary-variable">
+        <label for="${prefix}_commitment">薪資承諾（選填，例如：年薪保障14個月）</label>
+        <textarea id="${prefix}_commitment" placeholder="例如：年薪保障14個月">${esc(sal.commitment||"")}</textarea>
+      </div>
       <div class="salary-total">建議月薪合計：<b id="${prefix}_total">${fmtMoney(calcSalaryTotal(sal))}</b></div>
     </div>`;
 }
@@ -437,7 +441,9 @@ function readSalaryFromForm(prefix){
     }
     items[v.key] = {checked: chk ? chk.checked : false, amount};
   });
-  return {baseSalary: base !== '' ? Number(base) : null, items};
+  const commitEl = document.getElementById(`${prefix}_commitment`);
+  const commitment = commitEl ? commitEl.value.trim() : '';
+  return {baseSalary: base !== '' ? Number(base) : null, items, commitment};
 }
 function buildSalaryReadonly(sal){
   sal = sal || emptySalary();
@@ -454,6 +460,7 @@ function buildSalaryReadonly(sal){
         <div class="salary-row"><span>伙食費</span><span class="sal-fixed-amt">NT$ ${MEAL_ALLOWANCE.toLocaleString('zh-TW')}（固定）</span></div>
       </div>
       <div class="salary-variable">${rows}</div>
+      ${sal.commitment ? `<div class="salary-variable"><label>薪資承諾</label><div style="white-space:pre-wrap;background:#F4F2EC;border-radius:7px;padding:10px 12px;font-size:13.5px;">${esc(sal.commitment)}</div></div>` : ``}
       <div class="salary-total">建議月薪合計：<b>${fmtMoney(calcSalaryTotal(sal))}</b></div>
     </div>`;
 }
@@ -1047,6 +1054,9 @@ function buildSalaryPrintLines(sal){
     }
   });
   lines.push(`<div class="p-opt on" style="margin-top:4px;"><b>合計：${calcSalaryTotal(sal).toLocaleString('zh-TW')} 元</b></div>`);
+  if(sal.commitment){
+    lines.push(`<div class="p-opt on">薪資承諾：${esc(sal.commitment)}</div>`);
+  }
   return lines.join("");
 }
 
