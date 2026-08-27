@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0059)file:///C:/Users/shirley/Downloads/yl-interview-eval_1.html -->
-<html lang="zh-Hant"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>面談記錄評核表 | 永隆工程</title>
 
@@ -30,12 +30,12 @@
   ============================================================
 -->
 
-<script src="./面談記錄評核表 _ 永隆工程集團_files/firebase-app-compat.js.下載"></script>
-<script src="./面談記錄評核表 _ 永隆工程集團_files/firebase-firestore-compat.js.下載"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<link rel="preconnect" href="https://fonts.googleapis.com/">
-<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-<link href="./面談記錄評核表 _ 永隆工程集團_files/css2" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -289,21 +289,15 @@
 
 <div class="letterhead">
   <div>
-    <div class="org">永隆工程集團 · 人力資源</div>
+    <div class="org">永隆工程 · 人力資源</div>
     <h1>面談記錄評核表</h1>
   </div>
-  <div class="nav"><a href="file:///C:/Users/shirley/Downloads/yl-interview-eval_1.html#" id="navHome">管理後台</a></div>
+  <div class="nav"><a href="#" id="navHome">管理後台</a></div>
 </div>
 
 <div class="wrap" id="app">
-      <div class="card" style="max-width:360px;margin:60px auto;">
-        <h2 class="serif" style="margin-top:0;font-size:17px;">管理後台登入</h2>
-        <p class="muted">建立新的面談紀錄、產生連結、列印完成的表單。</p>
-        <label>密碼</label>
-        <input type="password" id="adminPass" placeholder="輸入密碼">
-        <div style="margin-top:14px;"><button class="btn-primary" id="adminGo">登入</button></div>
-        <p id="adminErr" style="color:var(--seal);font-size:13px;display:none;margin-top:8px;">密碼錯誤</p>
-      </div></div>
+  <div class="muted">載入中…</div>
+</div>
 
 <div id="toast"></div>
 <div id="printArea"></div>
@@ -318,8 +312,13 @@ const firebaseConfig = {
   messagingSenderId: "970909364995",
   appId: "1:970909364995:web:800637a4525159619aaf36"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let db = null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+}catch(err){
+  console.error("Firebase 初始化失敗：", err);
+}
 
 const ADMIN_PASSCODE = "yl-hr-2026"; // 請自行修改
 
@@ -391,11 +390,15 @@ function renderAdmin(){
         <div style="margin-top:14px;"><button class="btn-primary" id="adminGo">登入</button></div>
         <p id="adminErr" style="color:var(--seal);font-size:13px;display:none;margin-top:8px;">密碼錯誤</p>
       </div>`;
-    document.getElementById('adminGo').onclick = ()=>{
+    const tryLogin = ()=>{
       const v = document.getElementById('adminPass').value;
       if(v === ADMIN_PASSCODE){ adminUnlocked = true; renderAdmin(); }
       else document.getElementById('adminErr').style.display = 'block';
     };
+    document.getElementById('adminGo').onclick = tryLogin;
+    document.getElementById('adminPass').addEventListener('keydown', e=>{
+      if(e.key === 'Enter') tryLogin();
+    });
     return;
   }
 
@@ -736,7 +739,7 @@ async function printRecord(id){
 
   document.getElementById('printArea').innerHTML = `
     <div class="p-title">面談記錄評核表</div>
-    <div class="p-sub">永隆工程集團 · 人力資源</div>
+    <div class="p-sub">永隆工程 · 人力資源</div>
     <div class="p-info">
       <span>應徵者姓名：${esc(d.candidateName)}</span>
       <span>應徵部門：${esc(d.department)}</span>
@@ -775,6 +778,5 @@ async function printRecord(id){
 
 route();
 </script>
-
-
-</body></html>
+</body>
+</html>
