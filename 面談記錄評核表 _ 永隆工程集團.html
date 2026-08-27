@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<!-- saved from url=(0059)file:///C:/Users/shirley/Downloads/yl-interview-eval_1.html -->
+<html lang="zh-Hant"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>面談記錄評核表 | 永隆工程集團</title>
+
+<!--
+  ============================================================
+  部署前請完成以下設定：
+
+  1. Firebase 設定：把下面 firebaseConfig 換成你自己專案的設定
+     （可以沿用你其他系統，例如 yl-signreceipt / yl-exit-interview
+     所使用的同一個 Firebase 專案，這樣資料庫可以共用同一組帳密）。
+
+  2. Firestore 安全規則建議（Firebase Console → Firestore → 規則）：
+     rules_version = '2';
+     service cloud.firestore {
+       match /databases/{database}/documents {
+         match /interviews/{docId} {
+           allow read, write: if true; // 內部連結分享使用，如需更嚴謹可加驗證
+         }
+       }
+     }
+
+  3. 管理後台密碼：搜尋 ADMIN_PASSCODE 修改成你自己要用的密碼。
+
+  4. 部署方式：與你其他系統一致，直接上傳到 GitHub Pages 或
+     Firebase Hosting 即可，不需要任何建置流程。
+  ============================================================
+-->
+
+<script src="./面談記錄評核表 _ 永隆工程集團_files/firebase-app-compat.js.下載"></script>
+<script src="./面談記錄評核表 _ 永隆工程集團_files/firebase-firestore-compat.js.下載"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./面談記錄評核表 _ 永隆工程集團_files/css2" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#1B2A41;
+    --ink-soft:#4A5A70;
+    --paper:#F7F5F0;
+    --paper-raised:#FFFFFF;
+    --line:#DAD4C4;
+    --brass:#A6803D;
+    --brass-deep:#8A6A2E;
+    --seal:#B3492B;
+    --good:#4C7A5E;
+    --good-bg:#EAF1EC;
+    --shadow: 0 1px 2px rgba(27,42,65,0.06), 0 6px 16px rgba(27,42,65,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans TC', system-ui, sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{font-family:'Noto Serif TC', serif;}
+
+  a{color:var(--brass-deep);}
+
+  .letterhead{
+    background:var(--ink);
+    color:#F1EEE4;
+    padding:22px clamp(16px,4vw,40px);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .letterhead .org{
+    font-size:13px;
+    letter-spacing:.08em;
+    color:#C9BFA1;
+  }
+  .letterhead h1{
+    margin:2px 0 0;
+    font-size:clamp(20px,3vw,26px);
+    font-weight:700;
+    letter-spacing:.04em;
+  }
+  .letterhead .nav a{
+    color:#E7E1CE;
+    text-decoration:none;
+    font-size:13px;
+    border:1px solid #4A5A70;
+    padding:7px 14px;
+    border-radius:999px;
+  }
+  .letterhead .nav a:hover{border-color:var(--brass);color:#fff;}
+
+  .wrap{
+    max-width:900px;
+    margin:0 auto;
+    padding:clamp(16px,4vw,36px);
+  }
+
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:var(--shadow);
+    padding:clamp(18px,4vw,30px);
+    margin-bottom:20px;
+  }
+
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:560px){.field-row{grid-template-columns:1fr;}}
+  label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px;font-weight:600;}
+  input[type=text],input[type=date],input[type=password],textarea{
+    width:100%;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:7px;
+    padding:10px 12px;
+    font-size:15px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  input:focus,textarea:focus{outline:2px solid var(--brass);outline-offset:1px;border-color:var(--brass);}
+  textarea{resize:vertical;min-height:80px;}
+
+  button{
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    border-radius:8px;
+    border:1px solid transparent;
+    padding:11px 20px;
+    transition:transform .05s ease;
+  }
+  button:active{transform:translateY(1px);}
+  .btn-primary{background:var(--brass);color:#fff;}
+  .btn-primary:hover{background:var(--brass-deep);}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
+  .btn-ghost:hover{border-color:var(--brass);}
+  .btn-danger{background:transparent;border:1px solid var(--seal);color:var(--seal);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+
+  /* ---- Stepper ---- */
+  .stepper{display:flex;gap:0;margin-bottom:24px;}
+  .step{
+    flex:1;text-align:center;padding:12px 6px;position:relative;
+    font-size:13px;font-weight:600;color:var(--ink-soft);
+    border-bottom:3px solid var(--line);
+  }
+  .step.done{color:var(--good);border-bottom-color:var(--good);}
+  .step.active{color:var(--brass-deep);border-bottom-color:var(--brass);}
+  .step .sub{display:block;font-weight:400;font-size:11px;margin-top:2px;color:inherit;opacity:.8;}
+
+  /* ---- Category evaluation ---- */
+  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:640px){.cat-grid{grid-template-columns:1fr;}}
+  .cat{
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:14px 16px;
+    background:#FCFBF8;
+  }
+  .cat .cat-title{
+    font-weight:700;font-size:14px;margin-bottom:10px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .cat .cat-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:20px;height:20px;border-radius:50%;
+    background:var(--ink);color:#F1EEE4;font-size:11px;flex:none;
+  }
+  .opt-list{display:flex;flex-direction:column;gap:7px;}
+  .opt{
+    display:flex;align-items:flex-start;gap:8px;
+    font-size:13.5px;color:var(--ink);
+    padding:7px 9px;border-radius:6px;border:1px solid transparent;
+    cursor:pointer;
+  }
+  .opt:hover{background:#F1ECDD;}
+  .opt.selected{background:var(--good-bg);border-color:var(--good);color:#1E3A2A;font-weight:600;}
+  .opt input{margin-top:3px;accent-color:var(--brass);}
+  .cat .note-field{margin-top:8px;}
+  .cat .note-field input{font-size:13px;padding:7px 10px;}
+
+  .cat.readonly{background:#F4F2EC;}
+  .cat.readonly .opt{cursor:default;padding:5px 0;}
+  .cat.readonly .opt:hover{background:none;}
+  .cat.readonly .opt.selected{background:none;border:none;padding-left:0;}
+  .cat.readonly .opt:not(.selected){display:none;}
+  .cat.readonly .opt.selected::before{content:"✓ ";color:var(--good);}
+
+  .unanswered{color:var(--seal);font-size:12px;font-weight:600;}
+
+  /* ---- Signature pad ---- */
+  .sig-box{
+    border:1.5px dashed var(--line);
+    border-radius:9px;
+    background:#fff;
+    touch-action:none;
+    width:100%;
+    height:160px;
+    display:block;
+    cursor:crosshair;
+  }
+  .sig-tools{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .sig-hint{font-size:12px;color:var(--ink-soft);}
+
+  /* ---- Chop / stamp ---- */
+  .signed-block{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .signed-block img{height:70px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:4px;}
+  .chop{
+    width:64px;height:64px;border-radius:50%;
+    border:2.5px solid var(--seal);color:var(--seal);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif TC',serif;font-weight:700;font-size:13px;
+    transform:rotate(-11deg);
+    flex:none;
+    text-align:center;line-height:1.2;
+    opacity:.9;
+  }
+  .signed-meta{font-size:12.5px;color:var(--ink-soft);}
+  .signed-meta b{color:var(--ink);}
+
+  .status-pill{
+    display:inline-block;font-size:12px;font-weight:700;
+    padding:4px 11px;border-radius:999px;
+  }
+  .status-pill.wait{background:#F1ECDD;color:var(--brass-deep);}
+  .status-pill.done{background:var(--good-bg);color:var(--good);}
+
+  .muted{color:var(--ink-soft);font-size:13px;}
+  .divider{height:1px;background:var(--line);margin:20px 0;}
+
+  table.admin-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.admin-table th,table.admin-table td{
+    text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  table.admin-table th{color:var(--ink-soft);font-weight:600;font-size:12px;}
+  .link-copy{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;
+    background:#F1ECDD;padding:5px 10px;border-radius:6px;cursor:pointer;border:none;
+    color:var(--brass-deep);font-weight:600;
+  }
+
+  #toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#F1EEE4;padding:10px 18px;border-radius:8px;
+    font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:99;
+  }
+  #toast.show{opacity:1;}
+
+  /* ---- Print layout (mirrors original paper form) ---- */
+  #printArea{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea,#printArea *{visibility:visible;}
+    #printArea{
+      display:block;position:absolute;left:0;top:0;width:100%;
+      font-family:'Noto Sans TC',sans-serif;color:#000;
+      padding:14mm;
+    }
+    .p-title{text-align:center;font-size:18px;font-weight:700;margin-bottom:2mm;font-family:'Noto Serif TC',serif;}
+    .p-sub{text-align:center;font-size:11px;margin-bottom:5mm;color:#333;}
+    .p-info{display:flex;justify-content:space-between;font-size:11px;border:1px solid #000;padding:4px 8px;margin-bottom:4mm;}
+    .p-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #000;}
+    .p-cell{border:1px solid #000;padding:4px 7px;font-size:10.5px;}
+    .p-cell .p-cat-title{font-weight:700;margin-bottom:3px;}
+    .p-cell .p-opt{margin:1px 0;}
+    .p-cell .p-opt.on::before{content:"■ ";}
+    .p-cell .p-opt.off::before{content:"□ ";}
+    .p-comment{border:1px solid #000;border-top:none;padding:5px 8px;font-size:10.5px;min-height:18mm;}
+    .p-comment-label{font-weight:700;font-size:10.5px;margin-bottom:2px;}
+    .p-sign-row{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #000;border-top:none;}
+    .p-sign-cell{border-right:1px solid #000;padding:4px 8px;font-size:10px;min-height:24mm;position:relative;}
+    .p-sign-cell:last-child{border-right:none;}
+    .p-sign-cell img{max-height:16mm;display:block;margin-top:2px;}
+    .p-final{border:1px solid #000;border-top:none;padding:6px 8px;font-size:10.5px;}
+    .p-final .row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:5px;}
+    .p-final .opt{margin-right:10px;}
+    .p-final .line{display:inline-block;border-bottom:1px solid #000;min-width:70px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="letterhead">
+  <div>
+    <div class="org">永隆工程集團 · 人力資源</div>
+    <h1>面談記錄評核表</h1>
+  </div>
+  <div class="nav"><a href="file:///C:/Users/shirley/Downloads/yl-interview-eval_1.html#" id="navHome">管理後台</a></div>
+</div>
+
+<div class="wrap" id="app">
+      <div class="card" style="max-width:360px;margin:60px auto;">
+        <h2 class="serif" style="margin-top:0;font-size:17px;">管理後台登入</h2>
+        <p class="muted">建立新的面談紀錄、產生連結、列印完成的表單。</p>
+        <label>密碼</label>
+        <input type="password" id="adminPass" placeholder="輸入密碼">
+        <div style="margin-top:14px;"><button class="btn-primary" id="adminGo">登入</button></div>
+        <p id="adminErr" style="color:var(--seal);font-size:13px;display:none;margin-top:8px;">密碼錯誤</p>
+      </div></div>
+
+<div id="toast"></div>
+<div id="printArea"></div>
+
+<script>
+/* ============ Firebase 設定：請換成你自己的專案設定 ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAzOPjjQRa00bEW-OYHlQqIoZIcnchP0c4",
+  authDomain: "yl-interview-eval.firebaseapp.com",
+  projectId: "yl-interview-eval",
+  storageBucket: "yl-interview-eval.firebasestorage.app",
+  messagingSenderId: "970909364995",
+  appId: "1:970909364995:web:800637a4525159619aaf36"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const ADMIN_PASSCODE = "yl-hr-2026"; // 請自行修改
+
+/* ============ 表單題目設定（依原始評核表建立） ============ */
+const CATEGORIES = [
+  {id:1, title:"外表衣著", options:["衣著不整","對個人外表不太在意","個人外表整潔","衣著得體，外表落落大方","外觀整體而言非常適宜得體"], noteLabel:"其他說明"},
+  {id:2, title:"親和力", options:["表現很有距離及疏離感","可以接近，尚稱友善","熱誠，友善","非常外向，善於社交","非常熱心，友善"], noteLabel:"其他說明"},
+  {id:3, title:"個性/性格", options:["不合適此工作","不一定適合此工作(有疑問)","可以適合此工作","非常適合此工作","是最佳的選擇"], noteLabel:"其他說明"},
+  {id:4, title:"溝通技巧及表達能力", options:["話很少，不善表達自己","嘗試著表達自己，但表現平平","尚稱流利，表達平平","講得很好，中肯扼要","表現傑出，談吐流利"], noteLabel:"其他說明"},
+  {id:5, title:"相關專業訓練記錄", options:["沒有訓練記錄","曾參加過訓練，但與此工作無關","有工作相關訓練記錄","遠超過工作相關訓練記錄，並持有執照或證書"], noteLabel:"其他值得一提的訓練"},
+  {id:6, title:"警覺/反應", options:["反應遲鈍，抓不到重點","反應較慢，需要解釋","能抓住重點，表現尚可","反應靈敏，很容易溝通","非常精明，機靈"], noteLabel:"其他說明"},
+  {id:7, title:"工作穩定性", options:["異動頻繁，穩定性差","穩定性稍可","穩定性普通","穩定性佳","穩定性非常好"], noteLabel:"其他說明"},
+  {id:8, title:"工作經驗", options:["沒有工作相關經驗","稍有工作相關經驗","工作經驗剛好適合此工作","背景很好，有相當多經驗","非常好的背景及經驗"], noteLabel:"其他說明"},
+  {id:9, title:"未來期望", options:["從來沒想過","仍然想在目前的專業領域中發展","希望晉升更高的職位及更多的收入","希望自己創業"], noteLabel:"其他想法"},
+  {id:10, title:"整體而言", options:["完全不滿意","低於標準","平平","中上等","非常好"], noteLabel:"其他說明"},
+];
+
+const STAGE_ORDER = ["interviewer","deptManager","executive","completed"];
+const STAGE_LABEL = {interviewer:"面談者", deptManager:"部門主管", executive:"董事長/總經理", completed:"已完成"};
+const STAGE_CHOP  = {interviewer:"面談者\n已簽核", deptManager:"部門主管\n已簽核", executive:"總經理\n已簽核"};
+
+/* ============ 小工具 ============ */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function fmtDate(ts){
+  if(!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function esc(s){
+  return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function emptyEvaluations(){
+  const o = {};
+  CATEGORIES.forEach(c => o[c.id] = {choice:null, note:""});
+  return o;
+}
+
+/* ============ 路由 ============ */
+const app = document.getElementById('app');
+document.getElementById('navHome').addEventListener('click', e=>{
+  e.preventDefault();
+  history.pushState({}, "", location.pathname);
+  route();
+});
+window.addEventListener('popstate', route);
+
+function route(){
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  if(id){ renderFormView(id); } else { renderAdmin(); }
+}
+
+/* ============ 管理後台 ============ */
+let adminUnlocked = false;
+
+function renderAdmin(){
+  if(!adminUnlocked){
+    app.innerHTML = `
+      <div class="card" style="max-width:360px;margin:60px auto;">
+        <h2 class="serif" style="margin-top:0;font-size:17px;">管理後台登入</h2>
+        <p class="muted">建立新的面談紀錄、產生連結、列印完成的表單。</p>
+        <label>密碼</label>
+        <input type="password" id="adminPass" placeholder="輸入密碼">
+        <div style="margin-top:14px;"><button class="btn-primary" id="adminGo">登入</button></div>
+        <p id="adminErr" style="color:var(--seal);font-size:13px;display:none;margin-top:8px;">密碼錯誤</p>
+      </div>`;
+    document.getElementById('adminGo').onclick = ()=>{
+      const v = document.getElementById('adminPass').value;
+      if(v === ADMIN_PASSCODE){ adminUnlocked = true; renderAdmin(); }
+      else document.getElementById('adminErr').style.display = 'block';
+    };
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="card">
+      <h2 class="serif" style="margin-top:0;font-size:17px;">新增面談紀錄</h2>
+      <div class="field-row">
+        <div><label>應徵者姓名</label><input type="text" id="nCand"></div>
+        <div><label>應徵部門</label><input type="text" id="nDept"></div>
+      </div>
+      <div class="field-row" style="margin-top:12px;">
+        <div><label>應徵職務</label><input type="text" id="nPos"></div>
+        <div><label>面談日期</label><input type="date" id="nDate"></div>
+      </div>
+      <div style="margin-top:16px;"><button class="btn-primary" id="createBtn">建立並產生連結</button></div>
+    </div>
+    <div class="card">
+      <h2 class="serif" style="margin-top:0;font-size:17px;">所有紀錄</h2>
+      <div id="listWrap" class="muted">載入中…</div>
+    </div>`;
+
+  document.getElementById('nDate').valueAsDate = new Date();
+  document.getElementById('createBtn').onclick = createRecord;
+  loadList();
+}
+
+async function createRecord(){
+  const candidateName = document.getElementById('nCand').value.trim();
+  const department = document.getElementById('nDept').value.trim();
+  const position = document.getElementById('nPos').value.trim();
+  const interviewDate = document.getElementById('nDate').value;
+  if(!candidateName || !department || !position || !interviewDate){
+    toast("請完整填寫應徵者姓名、部門、職務與面談日期"); return;
+  }
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true; btn.textContent = "建立中…";
+  try{
+    const ref = await db.collection('interviews').add({
+      candidateName, department, position, interviewDate,
+      status: 'interviewer',
+      evaluations: emptyEvaluations(),
+      comments: "",
+      interviewer: null, deptManager: null, executive: null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("已建立，請將連結分享給面談者");
+    renderAdmin();
+  }catch(err){
+    console.error(err);
+    toast("建立失敗，請確認 Firebase 設定是否正確");
+    btn.disabled = false; btn.textContent = "建立並產生連結";
+  }
+}
+
+async function loadList(){
+  const wrap = document.getElementById('listWrap');
+  try{
+    const snap = await db.collection('interviews').orderBy('createdAt','desc').limit(50).get();
+    if(snap.empty){ wrap.innerHTML = `<p class="muted">尚無紀錄</p>`; return; }
+    let rows = "";
+    snap.forEach(doc=>{
+      const d = doc.data();
+      const link = `${location.origin}${location.pathname}?id=${doc.id}`;
+      const statusDone = d.status === 'completed';
+      rows += `
+        <tr>
+          <td><b>${esc(d.candidateName)}</b><br><span class="muted">${esc(d.department)} · ${esc(d.position)}</span></td>
+          <td>${esc(d.interviewDate||"")}</td>
+          <td><span class="status-pill ${statusDone?'done':'wait'}">${statusDone?'已完成':'待 '+STAGE_LABEL[d.status]+' 處理'}</span></td>
+          <td>
+            <button class="link-copy" data-link="${link}">複製連結 ↗</button>
+          </td>
+          <td>${statusDone ? `<button class="btn-ghost" data-print="${doc.id}" style="padding:6px 12px;font-size:12px;">列印/匯出PDF</button>` : `<span class="muted">—</span>`}</td>
+        </tr>`;
+    });
+    wrap.innerHTML = `
+      <table class="admin-table">
+        <thead><tr><th>應徵者</th><th>面談日期</th><th>目前狀態</th><th>連結</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    wrap.querySelectorAll('[data-link]').forEach(b=>{
+      b.onclick = ()=>{
+        navigator.clipboard.writeText(b.dataset.link).then(()=>toast("連結已複製"));
+      };
+    });
+    wrap.querySelectorAll('[data-print]').forEach(b=>{
+      b.onclick = ()=> printRecord(b.dataset.print);
+    });
+  }catch(err){
+    console.error(err);
+    wrap.innerHTML = `<p class="muted">載入失敗，請確認 Firebase 設定是否正確</p>`;
+  }
+}
+
+/* ============ 簽名板 ============ */
+function setupSignaturePad(canvas){
+  const ctx = canvas.getContext('2d');
+  const ratio = window.devicePixelRatio || 1;
+  function size(){
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1B2A41';
+  }
+  size();
+  let drawing = false, hasInk = false;
+  let last = null;
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return {x:p.clientX-rect.left, y:p.clientY-rect.top};
+  }
+  function start(e){ e.preventDefault(); drawing = true; last = pos(e); }
+  function move(e){
+    if(!drawing) return;
+    e.preventDefault();
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last = p; hasInk = true;
+  }
+  function end(){ drawing = false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+  return {
+    clear(){ ctx.clearRect(0,0,canvas.width,canvas.height); hasInk = false; },
+    isEmpty(){ return !hasInk; },
+    dataURL(){ return canvas.toDataURL('image/png'); }
+  };
+}
+
+/* ============ 表單 / 檢視畫面 ============ */
+async function renderFormView(id){
+  app.innerHTML = `<div class="muted">載入中…</div>`;
+  let doc;
+  try{
+    const snap = await db.collection('interviews').doc(id).get();
+    if(!snap.exists){ app.innerHTML = `<div class="card">找不到這筆紀錄，連結可能有誤。</div>`; return; }
+    doc = snap.data();
+  }catch(err){
+    console.error(err);
+    app.innerHTML = `<div class="card">載入失敗，請確認 Firebase 設定是否正確。</div>`;
+    return;
+  }
+
+  const stageIdx = STAGE_ORDER.indexOf(doc.status);
+  const stepper = ["interviewer","deptManager","executive"].map((s,i)=>{
+    const cls = i < stageIdx ? "done" : (i === stageIdx ? "active" : "");
+    return `<div class="step ${cls}">${STAGE_LABEL[s]}<span class="sub">${i<stageIdx?'已簽核':(i===stageIdx?'進行中':'待處理')}</span></div>`;
+  }).join("");
+
+  const headerCard = `
+    <div class="card">
+      <div class="field-row">
+        <div><span class="muted">應徵者姓名</span><div style="font-weight:700;font-size:16px;">${esc(doc.candidateName)}</div></div>
+        <div><span class="muted">應徵部門 / 職務</span><div style="font-weight:700;font-size:16px;">${esc(doc.department)} / ${esc(doc.position)}</div></div>
+      </div>
+      <div style="margin-top:10px;"><span class="muted">面談日期</span><div style="font-weight:600;">${esc(doc.interviewDate)}</div></div>
+    </div>`;
+
+  const isEditableStage = doc.status !== 'completed';
+  const editingAsInterviewer = doc.status === 'interviewer';
+
+  const catGrid = CATEGORIES.map(cat=>{
+    const val = (doc.evaluations && doc.evaluations[cat.id]) || {choice:null, note:""};
+    if(editingAsInterviewer){
+      const opts = cat.options.map((opt,i)=>`
+        <label class="opt ${val.choice===i?'selected':''}">
+          <input type="radio" name="cat${cat.id}" value="${i}" ${val.choice===i?'checked':''}>
+          <span>${esc(opt)}</span>
+        </label>`).join("");
+      return `
+        <div class="cat" id="catBlock${cat.id}">
+          <div class="cat-title"><span class="cat-num">${cat.id}</span>${esc(cat.title)}</div>
+          <div class="opt-list">${opts}</div>
+          <div class="note-field">
+            <input type="text" id="note${cat.id}" placeholder="${esc(cat.noteLabel)}（選填）" value="${esc(val.note)}">
+          </div>
+        </div>`;
+    } else {
+      const opts = cat.options.map((opt,i)=>`
+        <div class="opt ${val.choice===i?'selected':''}">${esc(opt)}</div>`).join("");
+      const noteHtml = val.note ? `<div class="muted" style="margin-top:6px;font-size:12.5px;">${esc(cat.noteLabel)}：${esc(val.note)}</div>` : "";
+      return `
+        <div class="cat readonly">
+          <div class="cat-title"><span class="cat-num">${cat.id}</span>${esc(cat.title)}</div>
+          <div class="opt-list">${val.choice===null?'<span class="unanswered">尚未填寫</span>':opts}</div>
+          ${noteHtml}
+        </div>`;
+    }
+  }).join("");
+
+  function signedRow(role){
+    const d = doc[role];
+    if(!d) return "";
+    const chop = STAGE_CHOP[role].replace("\n","<br>");
+    return `
+      <div class="divider"></div>
+      <div class="signed-block">
+        <div class="chop">${chop}</div>
+        <img src="${d.signature}" alt="簽名">
+        <div class="signed-meta"><b>${esc(d.name)}</b>（${STAGE_LABEL[role]}）<br>簽署時間：${fmtDate(d.signedAt)}</div>
+      </div>`;
+  }
+
+  let commentsBlock;
+  if(editingAsInterviewer){
+    commentsBlock = `
+      <label style="margin-top:4px;">面試評論</label>
+      <textarea id="commentsInput" placeholder="請輸入面試評論…">${esc(doc.comments||"")}</textarea>`;
+  } else {
+    commentsBlock = `
+      <label style="margin-top:4px;">面試評論</label>
+      <div style="white-space:pre-wrap;background:#F4F2EC;border-radius:7px;padding:10px 12px;font-size:14px;min-height:40px;">${esc(doc.comments) || '<span class="muted">（無）</span>'}</div>`;
+  }
+
+  let signSection = "";
+  if(isEditableStage){
+    const role = doc.status;
+    signSection = `
+      <div class="card">
+        <h2 class="serif" style="margin-top:0;font-size:16px;">${STAGE_LABEL[role]}簽核</h2>
+        <label>簽核人姓名</label>
+        <input type="text" id="signerName" placeholder="請輸入姓名">
+        <div style="margin-top:14px;">
+          <label>簽名（請用手指或滑鼠簽名）</label>
+          <canvas class="sig-box" id="sigPad"></canvas>
+          <div class="sig-tools">
+            <span class="sig-hint">簽好後直接送出即可</span>
+            <button class="btn-ghost" id="sigClear" type="button" style="padding:6px 14px;font-size:12px;">清除重簽</button>
+          </div>
+        </div>
+        <div style="margin-top:18px;">
+          <button class="btn-primary" id="submitBtn">確認送出並簽名</button>
+        </div>
+      </div>`;
+  }
+
+  let completedNote = "";
+  if(doc.status === 'completed'){
+    completedNote = `
+      <div class="card" style="background:var(--good-bg);border-color:var(--good);">
+        <b style="color:var(--good);">三層簽核皆已完成。</b>
+        <p class="muted" style="margin:6px 0 0;">此連結僅供檢視。如需請「總管理處」核章，請至管理後台使用「列印/匯出PDF」，會另外附上總管理處決議欄位供人工簽名。</p>
+      </div>`;
+  }
+
+  app.innerHTML = `
+    ${headerCard}
+    <div class="stepper">${stepper}</div>
+    <div class="card">
+      <h2 class="serif" style="margin-top:0;font-size:16px;">面談評核</h2>
+      <div class="cat-grid">${catGrid}</div>
+      <div class="divider"></div>
+      ${commentsBlock}
+      ${signedRow('interviewer')}
+      ${signedRow('deptManager')}
+      ${signedRow('executive')}
+    </div>
+    ${completedNote}
+    ${signSection}
+  `;
+
+  if(isEditableStage){
+    const pad = setupSignaturePad(document.getElementById('sigPad'));
+    document.getElementById('sigClear').onclick = ()=>pad.clear();
+    document.getElementById('submitBtn').onclick = ()=>submitStage(id, doc, pad);
+  }
+}
+
+async function submitStage(id, doc, pad){
+  const role = doc.status;
+  const name = document.getElementById('signerName').value.trim();
+  if(!name){ toast("請輸入簽核人姓名"); return; }
+  if(pad.isEmpty()){ toast("請先簽名"); return; }
+
+  let evaluations = doc.evaluations;
+  let comments = doc.comments;
+
+  if(role === 'interviewer'){
+    evaluations = {};
+    let missing = false;
+    CATEGORIES.forEach(cat=>{
+      const checked = document.querySelector(`input[name="cat${cat.id}"]:checked`);
+      const note = document.getElementById(`note${cat.id}`).value.trim();
+      if(!checked) missing = true;
+      evaluations[cat.id] = {choice: checked ? parseInt(checked.value,10) : null, note};
+    });
+    if(missing){ toast("請完成全部 10 項評核項目後再送出"); return; }
+    comments = document.getElementById('commentsInput').value.trim();
+  }
+
+  const nextStatus = STAGE_ORDER[STAGE_ORDER.indexOf(role)+1];
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = "送出中…";
+
+  try{
+    await db.collection('interviews').doc(id).update({
+      evaluations, comments,
+      [role]: { name, signature: pad.dataURL(), signedAt: firebase.firestore.FieldValue.serverTimestamp() },
+      status: nextStatus,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("已送出簽核");
+    renderFormView(id);
+  }catch(err){
+    console.error(err);
+    toast("送出失敗，請確認網路連線或 Firebase 設定");
+    btn.disabled = false; btn.textContent = "確認送出並簽名";
+  }
+}
+
+/* ============ 列印 / 匯出 PDF（含總管理處空白決議欄） ============ */
+async function printRecord(id){
+  const snap = await db.collection('interviews').doc(id).get();
+  if(!snap.exists){ toast("找不到紀錄"); return; }
+  const d = snap.data();
+
+  const cells = CATEGORIES.map(cat=>{
+    const val = (d.evaluations && d.evaluations[cat.id]) || {choice:null, note:""};
+    const opts = cat.options.map((opt,i)=>`<div class="p-opt ${val.choice===i?'on':'off'}">${esc(opt)}</div>`).join("");
+    const note = val.note ? `<div class="p-opt off">${esc(cat.noteLabel)}：${esc(val.note)}</div>` : `<div class="p-opt off">${esc(cat.noteLabel)}：</div>`;
+    return `<div class="p-cell"><div class="p-cat-title">${cat.id}. ${esc(cat.title)}</div>${opts}${note}</div>`;
+  }).join("");
+
+  function signCell(role){
+    const s = d[role];
+    if(!s) return `<div class="p-sign-cell"><b>${STAGE_LABEL[role]}簽字</b></div>`;
+    return `<div class="p-sign-cell"><b>${STAGE_LABEL[role]}簽字</b><img src="${s.signature}"><div>${esc(s.name)} · ${fmtDate(s.signedAt)}</div></div>`;
+  }
+
+  document.getElementById('printArea').innerHTML = `
+    <div class="p-title">面談記錄評核表</div>
+    <div class="p-sub">永隆工程集團 · 人力資源</div>
+    <div class="p-info">
+      <span>應徵者姓名：${esc(d.candidateName)}</span>
+      <span>應徵部門：${esc(d.department)}</span>
+      <span>應徵職務：${esc(d.position)}</span>
+      <span>面談日期：${esc(d.interviewDate)}</span>
+    </div>
+    <div class="p-grid">${cells}</div>
+    <div class="p-comment">
+      <div class="p-comment-label">面試評論</div>
+      ${esc(d.comments)||""}
+    </div>
+    <div class="p-sign-row">
+      ${signCell('interviewer')}
+      ${signCell('deptManager')}
+      ${signCell('executive')}
+    </div>
+    <div class="p-final">
+      <div class="row">
+        <b>總管理處：</b>
+        <span class="opt">□ 擬錄用</span>
+        <span class="opt">□ 候補人選</span>
+        <span class="opt">□ 不適合</span>
+        <span class="opt">□ 轉介其他部門</span>
+      </div>
+      <div class="row">
+        <span>正式上班日期：<span class="line">&nbsp;</span> 年 <span class="line">&nbsp;</span> 月 <span class="line">&nbsp;</span> 日</span>
+        <span>擬予薪資：<span class="line" style="min-width:110px;">&nbsp;</span> 元</span>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <span>總管理處簽核：<span class="line" style="min-width:220px;">&nbsp;</span></span>
+      </div>
+    </div>
+  `;
+  setTimeout(()=>window.print(), 80);
+}
+
+route();
+</script>
+
+
+</body></html>
