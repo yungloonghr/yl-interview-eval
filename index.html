@@ -202,6 +202,7 @@
   .cat.readonly .opt.selected::before{content:"✓ ";color:var(--good);}
 
   .unanswered{color:var(--seal);font-size:12px;font-weight:600;}
+  .req-mark{color:var(--seal);font-weight:700;margin-left:2px;}
 
   /* ---- Salary ---- */
   .salary-block{display:flex;flex-direction:column;gap:14px;}
@@ -300,10 +301,10 @@
   .p-cell .p-opt.off::before{content:"□ ";}
   .p-comment{border:1px solid #000;border-top:none;padding:4px 8px;font-size:10px;}
   .p-comment-label{font-weight:700;font-size:10px;margin-bottom:2px;}
-  .p-sign-row{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #000;border-top:none;}
-  .p-sign-cell{border-right:1px solid #000;padding:3px 8px;font-size:9.5px;min-height:20mm;position:relative;}
+  .p-sign-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border:1px solid #000;border-top:none;}
+  .p-sign-cell{border-right:1px solid #000;padding:3px 6px;font-size:9px;min-height:19mm;position:relative;}
   .p-sign-cell:last-child{border-right:none;}
-  .p-sign-cell img{max-height:14mm;display:block;margin-top:2px;}
+  .p-sign-cell img{max-height:13mm;display:block;margin-top:2px;}
   .p-final{border:1px solid #000;border-top:none;padding:5px 8px;font-size:10px;}
   .p-final .row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:4px;}
   .p-final .opt{margin-right:10px;}
@@ -356,21 +357,21 @@ const ADMIN_PASSCODE = "yl-hr-2026"; // 請自行修改
 
 /* ============ 表單題目設定（依原始評核表建立） ============ */
 const CATEGORIES = [
-  {id:1, title:"外表衣著", options:["衣著不整","對個人外表不太在意","個人外表整潔","衣著得體，外表落落大方","外觀整體而言非常適宜得體"], noteLabel:"其他說明"},
-  {id:2, title:"親和力", options:["表現很有距離及疏離感","可以接近，尚稱友善","熱誠，友善","非常外向，善於社交","非常熱心，友善"], noteLabel:"其他說明"},
-  {id:3, title:"個性/性格", options:["不合適此工作","不一定適合此工作(有疑問)","可以適合此工作","非常適合此工作","是最佳的選擇"], noteLabel:"其他說明"},
-  {id:4, title:"溝通技巧及表達能力", options:["話很少，不善表達自己","嘗試著表達自己，但表現平平","尚稱流利，表達平平","講得很好，中肯扼要","表現傑出，談吐流利"], noteLabel:"其他說明"},
+  {id:1, title:"外表衣著", options:["衣著不整","對個人外表不太在意","個人外表整潔","衣著得體，外表落落大方","外觀整體而言非常適宜得體"], noteLabel:"補充說明"},
+  {id:2, title:"親和力", options:["表現很有距離及疏離感","可以接近，尚稱友善","熱誠，友善","非常外向，善於社交","非常熱心，友善"], noteLabel:"補充說明"},
+  {id:3, title:"個性/性格", options:["不合適此工作","不一定適合此工作(有疑問)","可以適合此工作","非常適合此工作","是最佳的選擇"], noteLabel:"補充說明"},
+  {id:4, title:"溝通技巧及表達能力", options:["話很少，不善表達自己","嘗試著表達自己，但表現平平","尚稱流利，表達平平","講得很好，中肯扼要","表現傑出，談吐流利"], noteLabel:"補充說明"},
   {id:5, title:"相關專業訓練記錄", options:["沒有訓練記錄","曾參加過訓練，但與此工作無關","有工作相關訓練記錄","遠超過工作相關訓練記錄，並持有執照或證書"], noteLabel:"其他值得一提的訓練"},
-  {id:6, title:"警覺/反應", options:["反應遲鈍，抓不到重點","反應較慢，需要解釋","能抓住重點，表現尚可","反應靈敏，很容易溝通","非常精明，機靈"], noteLabel:"其他說明"},
-  {id:7, title:"工作穩定性", options:["異動頻繁，穩定性差","穩定性稍可","穩定性普通","穩定性佳","穩定性非常好"], noteLabel:"其他說明"},
-  {id:8, title:"工作經驗", options:["沒有工作相關經驗","稍有工作相關經驗","工作經驗剛好適合此工作","背景很好，有相當多經驗","非常好的背景及經驗"], noteLabel:"其他說明"},
+  {id:6, title:"警覺/反應", options:["反應遲鈍，抓不到重點","反應較慢，需要解釋","能抓住重點，表現尚可","反應靈敏，很容易溝通","非常精明，機靈"], noteLabel:"補充說明"},
+  {id:7, title:"工作穩定性", options:["異動頻繁，穩定性差","穩定性稍可","穩定性普通","穩定性佳","穩定性非常好"], noteLabel:"補充說明"},
+  {id:8, title:"工作經驗", options:["沒有工作相關經驗","稍有工作相關經驗","工作經驗剛好適合此工作","背景很好，有相當多經驗","非常好的背景及經驗"], noteLabel:"補充說明"},
   {id:9, title:"未來期望", options:["從來沒想過","仍然想在目前的專業領域中發展","希望晉升更高的職位及更多的收入","希望自己創業"], noteLabel:"其他想法"},
-  {id:10, title:"整體而言", options:["完全不滿意","低於標準","平平","中上等","非常好"], noteLabel:"其他說明"},
+  {id:10, title:"整體而言", options:["完全不滿意","低於標準","平平","中上等","非常好"], noteLabel:"補充說明"},
 ];
 
-const STAGE_ORDER = ["interviewer","deptManager","executive","completed"];
-const STAGE_LABEL = {interviewer:"面談者", deptManager:"部門主管", executive:"董事長/總經理", completed:"已完成"};
-const STAGE_CHOP  = {interviewer:"面談者\n已簽核", deptManager:"部門主管\n已簽核", executive:"總經理\n已簽核"};
+const STAGE_ORDER = ["interviewer","deptManager","executive","generalAffairs","completed"];
+const STAGE_LABEL = {interviewer:"面談者", deptManager:"部門主管", executive:"董事長/總經理", generalAffairs:"總管理處", completed:"已完成"};
+const STAGE_CHOP  = {interviewer:"面談者\n已簽核", deptManager:"部門主管\n已簽核", executive:"總經理\n已簽核", generalAffairs:"總管理處\n已簽核"};
 
 /* ============ 薪資結構設定 ============ */
 const MEAL_ALLOWANCE = 3000;
@@ -399,8 +400,9 @@ function calcSalaryTotal(sal){
 }
 function fmtMoney(n){ return "NT$ " + (Number(n)||0).toLocaleString('zh-TW'); }
 
-function buildSalaryEditor(sal, prefix){
+function buildSalaryEditor(sal, prefix, required){
   sal = sal || emptySalary();
+  const mark = required ? `<span class="req-mark">*</span>` : ``;
   const rows = SALARY_VARIABLE.map(v=>{
     const it = (sal.items && sal.items[v.key]) || {checked:false, amount:v.amount};
     const isCustom = v.amount === null;
@@ -417,7 +419,7 @@ function buildSalaryEditor(sal, prefix){
   return `
     <div class="salary-block" id="${prefix}_block">
       <div class="salary-fixed">
-        <div class="salary-row"><label for="${prefix}_base">本薪</label><input type="number" id="${prefix}_base" placeholder="請輸入本薪" value="${sal.baseSalary!=null?sal.baseSalary:''}"></div>
+        <div class="salary-row"><label for="${prefix}_base">本薪${mark}</label><input type="number" id="${prefix}_base" placeholder="請輸入本薪" value="${sal.baseSalary!=null?sal.baseSalary:''}"></div>
         <div class="salary-row"><span>伙食費</span><span class="sal-fixed-amt">NT$ ${MEAL_ALLOWANCE.toLocaleString('zh-TW')}（固定）</span></div>
       </div>
       <div class="salary-variable">
@@ -425,7 +427,7 @@ function buildSalaryEditor(sal, prefix){
         <div class="sal-item-list">${rows}</div>
       </div>
       <div class="salary-variable">
-        <label for="${prefix}_commitment">薪資承諾（必填，例如：年薪保障14個月；若無請填「無」）</label>
+        <label for="${prefix}_commitment">薪資承諾${mark}（例如：年薪保障14個月；若無請填「無」）</label>
         <textarea id="${prefix}_commitment" placeholder="例如：年薪保障14個月；若無請填「無」">${esc(sal.commitment||"")}</textarea>
       </div>
       <div class="salary-total">建議月薪合計：<b id="${prefix}_total">${fmtMoney(calcSalaryTotal(sal))}</b></div>
@@ -489,10 +491,10 @@ function buildHireEditor(doc){
     </label>`).join("");
   return `
     <div class="card">
-      <h2 class="serif" style="margin-top:0;font-size:16px;">任用建議（必填）</h2>
+      <h2 class="serif" style="margin-top:0;font-size:16px;">任用建議<span class="req-mark">*</span></h2>
       <div class="opt-list" style="flex-direction:row;flex-wrap:wrap;">${opts}</div>
       <div style="margin-top:14px;max-width:220px;">
-        <label for="startDateInput">正式上班日期</label>
+        <label for="startDateInput">正式上班日期<span class="req-mark">*</span></label>
         <input type="date" id="startDateInput" value="${esc(doc.startDate||'')}">
       </div>
     </div>`;
@@ -648,7 +650,7 @@ function renderLoginScreen(){
 function renderAdminDashboard(){
   app.innerHTML = `
     <div class="card">
-      <h2 class="serif" style="margin-top:0;font-size:17px;">新增面談紀錄</h2>
+      <h2 class="serif" style="margin-top:0;font-size:17px;" id="formTitle">新增面談紀錄</h2>
       <div class="field-row">
         <div><label>應徵者姓名</label><input type="text" id="nCand"></div>
         <div><label>應徵部門</label><input type="text" id="nDept"></div>
@@ -657,7 +659,10 @@ function renderAdminDashboard(){
         <div><label>應徵職務</label><input type="text" id="nPos"></div>
         <div><label>面談日期</label><input type="date" id="nDate"></div>
       </div>
-      <div style="margin-top:16px;"><button class="btn-primary" id="createBtn">建立並產生連結</button></div>
+      <div style="margin-top:16px;display:flex;gap:10px;">
+        <button class="btn-primary" id="createBtn">建立並產生連結</button>
+        <button class="btn-ghost" id="cancelEditBtn" style="display:none;">取消編輯</button>
+      </div>
     </div>
     <div class="card">
       <h2 class="serif" style="margin-top:0;font-size:17px;">所有紀錄</h2>
@@ -666,8 +671,58 @@ function renderAdminDashboard(){
 
   document.getElementById('nDate').valueAsDate = new Date();
   document.getElementById('createBtn').onclick = createRecord;
+  document.getElementById('cancelEditBtn').onclick = ()=>{ editingRecordId = null; renderAdminDashboard(); };
   loadList();
 }
+
+let editingRecordId = null;
+
+async function editRecord(id){
+  try{
+    const snap = await db.collection('interviews').doc(id).get();
+    if(!snap.exists){ toast("找不到這筆紀錄"); return; }
+    const d = snap.data();
+    editingRecordId = id;
+    document.getElementById('formTitle').textContent = "編輯基本資料";
+    document.getElementById('nCand').value = d.candidateName || "";
+    document.getElementById('nDept').value = d.department || "";
+    document.getElementById('nPos').value = d.position || "";
+    document.getElementById('nDate').value = d.interviewDate || "";
+    document.getElementById('createBtn').textContent = "儲存修改";
+    document.getElementById('createBtn').onclick = saveEditedRecord;
+    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }catch(err){
+    console.error(err);
+    toast("讀取失敗，請確認網路連線或 Firebase 設定");
+  }
+}
+
+async function saveEditedRecord(){
+  const candidateName = document.getElementById('nCand').value.trim();
+  const department = document.getElementById('nDept').value.trim();
+  const position = document.getElementById('nPos').value.trim();
+  const interviewDate = document.getElementById('nDate').value;
+  if(!candidateName || !department || !position || !interviewDate){
+    toast("請完整填寫應徵者姓名、部門、職務與面談日期"); return;
+  }
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true; btn.textContent = "儲存中…";
+  try{
+    await db.collection('interviews').doc(editingRecordId).update({
+      candidateName, department, position, interviewDate,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("已儲存修改");
+    editingRecordId = null;
+    renderAdminDashboard();
+  }catch(err){
+    console.error(err);
+    toast("儲存失敗，請確認網路連線或 Firebase 設定");
+    btn.disabled = false; btn.textContent = "儲存修改";
+  }
+}
+
 
 async function createRecord(){
   const candidateName = document.getElementById('nCand').value.trim();
@@ -691,7 +746,7 @@ async function createRecord(){
       startDate: "",
       resumeURL: null,
       resumeFileName: null,
-      interviewer: null, deptManager: null, executive: null,
+      interviewer: null, deptManager: null, executive: null, generalAffairs: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -733,6 +788,7 @@ async function loadList(){
           <td><span class="status-pill ${statusDone?'done':'wait'}">${statusDone?'已完成':'待 '+STAGE_LABEL[d.status]+' 處理'}</span></td>
           <td><button class="link-copy" data-link="${link}">複製連結 ↗</button></td>
           <td style="white-space:nowrap;">
+            <button class="btn-ghost" data-edit="${doc.id}" style="padding:6px 12px;font-size:12px;margin-right:6px;">編輯</button>
             <button class="btn-ghost" data-preview="${doc.id}" style="padding:6px 12px;font-size:12px;margin-right:6px;">預覽進度</button>
             <button class="btn-ghost" data-print="${doc.id}" style="padding:6px 12px;font-size:12px;margin-right:6px;">轉出PDF</button>
             <button class="btn-danger" data-delete="${doc.id}" data-name="${esc(d.candidateName)}" style="padding:6px 12px;font-size:12px;">刪除</button>
@@ -746,6 +802,9 @@ async function loadList(){
       </table>`;
     wrap.querySelectorAll('[data-link]').forEach(b=>{
       b.onclick = ()=> navigator.clipboard.writeText(b.dataset.link).then(()=>toast("連結已複製"));
+    });
+    wrap.querySelectorAll('[data-edit]').forEach(b=>{
+      b.onclick = ()=> editRecord(b.dataset.edit);
     });
     wrap.querySelectorAll('[data-delete]').forEach(b=>{
       b.onclick = ()=> deleteRecord(b.dataset.delete, b.dataset.name);
@@ -847,10 +906,14 @@ async function renderFormView(id){
   }
 
   const stageIdx = STAGE_ORDER.indexOf(doc.status);
-  const stepper = ["interviewer","deptManager","executive"].map((s,i)=>{
+  const stepper = ["interviewer","deptManager","executive","generalAffairs"].map((s,i)=>{
     const cls = i < stageIdx ? "done" : (i === stageIdx ? "active" : "");
     return `<div class="step ${cls}">${STAGE_LABEL[s]}<span class="sub">${i<stageIdx?'已簽核':(i===stageIdx?'進行中':'待處理')}</span></div>`;
   }).join("");
+
+  const resumeLinkLine = doc.resumeURL
+    ? `<div style="margin-top:10px;"><a href="${doc.resumeURL}" target="_blank" rel="noopener" style="font-weight:700;">📄 點此瀏覽應徵者履歷（${esc(doc.resumeFileName||'')}）</a></div>`
+    : ``;
 
   const headerCard = `
     <div class="card">
@@ -859,6 +922,7 @@ async function renderFormView(id){
         <div><span class="muted">應徵部門 / 職務</span><div style="font-weight:700;font-size:16px;">${esc(doc.department)} / ${esc(doc.position)}</div></div>
       </div>
       <div style="margin-top:10px;"><span class="muted">面談日期</span><div style="font-weight:600;">${esc(doc.interviewDate)}</div></div>
+      ${resumeLinkLine}
     </div>`;
 
   const isEditableStage = doc.status !== 'completed';
@@ -874,10 +938,10 @@ async function renderFormView(id){
       </label>`).join("");
     return `
       <div class="cat" id="catBlock${cat.id}">
-        <div class="cat-title"><span class="cat-num">${cat.id}</span>${esc(cat.title)}</div>
+        <div class="cat-title"><span class="cat-num">${cat.id}</span>${esc(cat.title)}<span class="req-mark">*</span></div>
         <div class="opt-list">${opts}</div>
         <div class="note-field">
-          <input type="text" id="note${cat.id}" placeholder="${esc(cat.noteLabel)}（若無請填「無」）" value="${esc(val.note)}">
+          <input type="text" id="note${cat.id}" placeholder="${esc(cat.noteLabel)}（選填）" value="${esc(val.note)}">
         </div>
       </div>`;
   }).join("") : buildCategoryReadonlyHTML(doc);
@@ -885,7 +949,7 @@ async function renderFormView(id){
   let commentsBlock;
   if(editingAsInterviewer){
     commentsBlock = `
-      <label style="margin-top:4px;">面試評論</label>
+      <label style="margin-top:4px;">面試評論<span class="req-mark">*</span></label>
       <textarea id="commentsInput" placeholder="請輸入面試評論（必填）…">${esc(doc.comments||"")}</textarea>`;
   } else {
     commentsBlock = `
@@ -898,7 +962,7 @@ async function renderFormView(id){
     salaryCardHTML = `
       <div class="card">
         <h2 class="serif" style="margin-top:0;font-size:16px;">建議錄取薪資</h2>
-        ${buildSalaryEditor(doc.salaryProposal, 'sal')}
+        ${buildSalaryEditor(doc.salaryProposal, 'sal', true)}
       </div>`;
   } else if(doc.status === 'deptManager'){
     salaryCardHTML = `
@@ -906,12 +970,18 @@ async function renderFormView(id){
         <h2 class="serif" style="margin-top:0;font-size:16px;">建議錄取薪資</h2>
         ${buildSalaryReadonly(doc.salaryProposal)}
       </div>`;
+  } else if(doc.status === 'generalAffairs'){
+    salaryCardHTML = `
+      <div class="card">
+        <h2 class="serif" style="margin-top:0;font-size:16px;">最終確認薪資</h2>
+        ${buildSalaryReadonly(doc.salaryFinal || doc.salaryProposal)}
+      </div>`;
   } else if(editingAsExecutive){
     salaryCardHTML = `
       <div class="card">
         <h2 class="serif" style="margin-top:0;font-size:16px;">薪資確認</h2>
         <p class="muted" style="margin-top:0;">以下為第一關建議薪資，您可以確認或修改後再簽核。</p>
-        ${buildSalaryEditor(doc.salaryFinal || doc.salaryProposal, 'salFinal')}
+        ${buildSalaryEditor(doc.salaryFinal || doc.salaryProposal, 'salFinal', false)}
       </div>`;
   } else if(doc.status === 'completed'){
     salaryCardHTML = `
@@ -922,9 +992,9 @@ async function renderFormView(id){
   }
 
   const hireCardHTML = editingAsInterviewer ? buildHireEditor(doc) : buildHireReadonly(doc);
-  const resumeCardHTML = editingAsInterviewer ? buildResumeEditor(doc) : buildResumeReadonly(doc);
+  const resumeCardHTML = editingAsInterviewer ? buildResumeEditor(doc) : ``;
 
-  const signedRows = signedRowHTML(doc,'interviewer') + signedRowHTML(doc,'deptManager') + signedRowHTML(doc,'executive');
+  const signedRows = signedRowHTML(doc,'interviewer') + signedRowHTML(doc,'deptManager') + signedRowHTML(doc,'executive') + signedRowHTML(doc,'generalAffairs');
 
   let signSection = "";
   if(isEditableStage){
@@ -950,8 +1020,8 @@ async function renderFormView(id){
   if(doc.status === 'completed'){
     completedNote = `
       <div class="card" style="background:var(--good-bg);border-color:var(--good);">
-        <b style="color:var(--good);">三層簽核皆已完成。</b>
-        <p class="muted" style="margin:6px 0 0;">此連結僅供檢視。如需請「總管理處」核章，請至管理後台使用「轉出PDF」，會另外附上總管理處決議欄位供人工簽名。</p>
+        <b style="color:var(--good);">四方簽核皆已完成。</b>
+        <p class="muted" style="margin:6px 0 0;">此連結僅供檢視。如需紙本存查，可至管理後台使用「轉出PDF」。</p>
       </div>`;
   }
 
@@ -992,13 +1062,11 @@ async function renderFormView(id){
 function gatherInterviewerForm(){
   const evaluations = {};
   let missingChoice = false;
-  let missingNote = false;
   CATEGORIES.forEach(cat=>{
     const checked = document.querySelector(`input[name="cat${cat.id}"]:checked`);
     const noteEl = document.getElementById(`note${cat.id}`);
     const note = noteEl ? noteEl.value.trim() : "";
     if(!checked) missingChoice = true;
-    if(!note) missingNote = true;
     evaluations[cat.id] = {choice: checked ? parseInt(checked.value,10) : null, note};
   });
   const commentsEl = document.getElementById('commentsInput');
@@ -1008,12 +1076,11 @@ function gatherInterviewerForm(){
   const startDateEl = document.getElementById('startDateInput');
   const startDate = startDateEl ? startDateEl.value : "";
   const salary = readSalaryFromForm('sal');
-  return {evaluations, comments, hireDecision, startDate, salary, missingChoice, missingNote};
+  return {evaluations, comments, hireDecision, startDate, salary, missingChoice};
 }
 
 function validateInterviewerForm(g){
   if(g.missingChoice) return "請完成全部 10 項評核項目（勾選選項）後再送出";
-  if(g.missingNote) return "每一項評核的說明欄都必須填寫，若無請填「無」";
   if(!g.comments) return "請填寫面試評論";
   if(!g.hireDecision) return "請選擇任用建議";
   if(!g.startDate) return "請填寫正式上班日期";
@@ -1112,12 +1179,12 @@ async function renderPreview(id){
   }
 
   const stageIdx = STAGE_ORDER.indexOf(doc.status);
-  const stepper = ["interviewer","deptManager","executive"].map((s,i)=>{
+  const stepper = ["interviewer","deptManager","executive","generalAffairs"].map((s,i)=>{
     const cls = i < stageIdx ? "done" : (i === stageIdx ? "active" : "");
     return `<div class="step ${cls}">${STAGE_LABEL[s]}<span class="sub">${i<stageIdx?'已簽核':(i===stageIdx?'進行中':'待處理')}</span></div>`;
   }).join("");
 
-  const signedRows = signedRowHTML(doc,'interviewer') + signedRowHTML(doc,'deptManager') + signedRowHTML(doc,'executive');
+  const signedRows = signedRowHTML(doc,'interviewer') + signedRowHTML(doc,'deptManager') + signedRowHTML(doc,'executive') + signedRowHTML(doc,'generalAffairs');
   const salaryHTML = buildSalaryReadonly(doc.salaryFinal || doc.salaryProposal);
 
   app.innerHTML = `
@@ -1128,6 +1195,7 @@ async function renderPreview(id){
         <div><span class="muted">應徵部門 / 職務</span><div style="font-weight:700;font-size:16px;">${esc(doc.department)} / ${esc(doc.position)}</div></div>
       </div>
       <div style="margin-top:10px;"><span class="muted">面談日期</span><div style="font-weight:600;">${esc(doc.interviewDate)}</div></div>
+      ${doc.resumeURL ? `<div style="margin-top:10px;"><a href="${doc.resumeURL}" target="_blank" rel="noopener" style="font-weight:700;">📄 點此瀏覽應徵者履歷（${esc(doc.resumeFileName||'')}）</a></div>` : ``}
     </div>
     <div class="stepper">${stepper}</div>
     <div class="card">
@@ -1139,7 +1207,6 @@ async function renderPreview(id){
       ${signedRows}
     </div>
     ${buildHireReadonly(doc)}
-    ${buildResumeReadonly(doc)}
     <div class="card">
       <h2 class="serif" style="margin-top:0;font-size:16px;">薪資</h2>
       ${salaryHTML}
@@ -1221,15 +1288,7 @@ async function printRecord(id){
       ${signCell('interviewer')}
       ${signCell('deptManager')}
       ${signCell('executive')}
-    </div>
-    <div class="p-final">
-      <div class="row">
-        <b>總管理處（董事長/總經理簽核後填寫）：</b>
-        <span>擬予薪資：<span class="line" style="min-width:110px;">&nbsp;</span> 元</span>
-      </div>
-      <div class="row" style="margin-top:14px;">
-        <span>總管理處簽核：<span class="line" style="min-width:220px;">&nbsp;</span></span>
-      </div>
+      ${signCell('generalAffairs')}
     </div>
   `;
   fitPrintAreaToA4();
