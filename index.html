@@ -21,6 +21,16 @@
        }
      }
 
+  2-1. Storage 安全規則建議（Firebase Console → Storage → 規則，履歷檔案用）：
+     rules_version = '2';
+     service firebase.storage {
+       match /b/{bucket}/o {
+         match /resumes/{docId}/{fileName} {
+           allow read, write: if true;
+         }
+       }
+     }
+
   3. 管理後台密碼：搜尋 ADMIN_PASSCODE 修改成你自己要用的密碼。
 
   4. 部署方式：直接上傳到 GitHub Pages 或 Firebase Hosting，
@@ -30,6 +40,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -332,9 +343,11 @@ const firebaseConfig = {
   appId: "1:970909364995:web:800637a4525159619aaf36"
 };
 let db = null;
+let storage = null;
 try{
   firebase.initializeApp(firebaseConfig);
   db = firebase.firestore();
+  storage = firebase.storage();
 }catch(err){
   console.error("Firebase 初始化失敗：", err);
 }
@@ -412,8 +425,8 @@ function buildSalaryEditor(sal, prefix){
         <div class="sal-item-list">${rows}</div>
       </div>
       <div class="salary-variable">
-        <label for="${prefix}_commitment">薪資承諾（選填，例如：年薪保障14個月）</label>
-        <textarea id="${prefix}_commitment" placeholder="例如：年薪保障14個月">${esc(sal.commitment||"")}</textarea>
+        <label for="${prefix}_commitment">薪資承諾（必填，例如：年薪保障14個月；若無請填「無」）</label>
+        <textarea id="${prefix}_commitment" placeholder="例如：年薪保障14個月；若無請填「無」">${esc(sal.commitment||"")}</textarea>
       </div>
       <div class="salary-total">建議月薪合計：<b id="${prefix}_total">${fmtMoney(calcSalaryTotal(sal))}</b></div>
     </div>`;
@@ -476,7 +489,7 @@ function buildHireEditor(doc){
     </label>`).join("");
   return `
     <div class="card">
-      <h2 class="serif" style="margin-top:0;font-size:16px;">任用建議</h2>
+      <h2 class="serif" style="margin-top:0;font-size:16px;">任用建議（必填）</h2>
       <div class="opt-list" style="flex-direction:row;flex-wrap:wrap;">${opts}</div>
       <div style="margin-top:14px;max-width:220px;">
         <label for="startDateInput">正式上班日期</label>
@@ -493,6 +506,66 @@ function buildHireReadonly(doc){
       <div class="salary-row"><span>任用建議</span><span class="sal-fixed-amt">${decision}</span></div>
       <div class="salary-row" style="margin-top:8px;"><span>正式上班日期</span><span class="sal-fixed-amt">${date}</span></div>
     </div>`;
+}
+
+/* ============ 履歷上傳 ============ */
+function buildResumeEditor(doc){
+  const existing = doc.resumeURL
+    ? `<div class="signed-block" style="margin-bottom:12px;"><a href="${doc.resumeURL}" target="_blank" rel="noopener">📄 ${esc(doc.resumeFileName||'目前已上傳的履歷')}</a></div>`
+    : `<p class="muted" style="margin-top:0;">尚未上傳履歷。</p>`;
+  return `
+    <div class="card">
+      <h2 class="serif" style="margin-top:0;font-size:16px;">應徵者履歷</h2>
+      ${existing}
+      <input type="file" id="resumeFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+        <button class="btn-ghost" id="resumeUploadBtn" type="button">上傳履歷</button>
+        <span class="muted" id="resumeStatus"></span>
+      </div>
+    </div>`;
+}
+function buildResumeReadonly(doc){
+  const body = doc.resumeURL
+    ? `<a href="${doc.resumeURL}" target="_blank" rel="noopener">📄 ${esc(doc.resumeFileName||'查看履歷')}</a>`
+    : `<span class="unanswered">尚未上傳履歷</span>`;
+  return `
+    <div class="card">
+      <h2 class="serif" style="margin-top:0;font-size:16px;">應徵者履歷</h2>
+      <div>${body}</div>
+    </div>`;
+}
+async function uploadResume(id){
+  const fileEl = document.getElementById('resumeFile');
+  const statusEl = document.getElementById('resumeStatus');
+  const btn = document.getElementById('resumeUploadBtn');
+  const file = fileEl && fileEl.files[0];
+  if(!file){ toast("請先選擇履歷檔案"); return; }
+  if(!storage){ toast("Storage 尚未設定，請確認 Firebase 設定"); return; }
+  btn.disabled = true;
+  try{
+    const path = `resumes/${id}/${Date.now()}_${file.name}`;
+    const ref = storage.ref().child(path);
+    const task = ref.put(file);
+    task.on('state_changed', snap=>{
+      const pct = Math.round((snap.bytesTransferred/snap.totalBytes)*100);
+      if(statusEl) statusEl.textContent = `上傳中… ${pct}%`;
+    });
+    await task;
+    const url = await ref.getDownloadURL();
+    await db.collection('interviews').doc(id).update({
+      resumeURL: url,
+      resumeFileName: file.name,
+      resumeUploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    if(statusEl) statusEl.textContent = "已上傳";
+    toast("履歷已上傳");
+  }catch(err){
+    console.error(err);
+    toast("上傳失敗，請確認 Storage 設定是否正確");
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 /* ============ 小工具 ============ */
@@ -616,6 +689,8 @@ async function createRecord(){
       salaryFinal: null,
       hireDecision: null,
       startDate: "",
+      resumeURL: null,
+      resumeFileName: null,
       interviewer: null, deptManager: null, executive: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -626,6 +701,18 @@ async function createRecord(){
     console.error(err);
     toast("建立失敗，請確認 Firebase 設定是否正確");
     btn.disabled = false; btn.textContent = "建立並產生連結";
+  }
+}
+
+async function deleteRecord(id, name){
+  if(!confirm(`確定要刪除「${name}」這筆面談紀錄嗎？此動作無法復原。`)) return;
+  try{
+    await db.collection('interviews').doc(id).delete();
+    toast("已刪除");
+    loadList();
+  }catch(err){
+    console.error(err);
+    toast("刪除失敗，請確認網路連線或 Firebase 設定");
   }
 }
 
@@ -647,7 +734,8 @@ async function loadList(){
           <td><button class="link-copy" data-link="${link}">複製連結 ↗</button></td>
           <td style="white-space:nowrap;">
             <button class="btn-ghost" data-preview="${doc.id}" style="padding:6px 12px;font-size:12px;margin-right:6px;">預覽進度</button>
-            <button class="btn-ghost" data-print="${doc.id}" style="padding:6px 12px;font-size:12px;">轉出PDF</button>
+            <button class="btn-ghost" data-print="${doc.id}" style="padding:6px 12px;font-size:12px;margin-right:6px;">轉出PDF</button>
+            <button class="btn-danger" data-delete="${doc.id}" data-name="${esc(d.candidateName)}" style="padding:6px 12px;font-size:12px;">刪除</button>
           </td>
         </tr>`;
     });
@@ -658,6 +746,9 @@ async function loadList(){
       </table>`;
     wrap.querySelectorAll('[data-link]').forEach(b=>{
       b.onclick = ()=> navigator.clipboard.writeText(b.dataset.link).then(()=>toast("連結已複製"));
+    });
+    wrap.querySelectorAll('[data-delete]').forEach(b=>{
+      b.onclick = ()=> deleteRecord(b.dataset.delete, b.dataset.name);
     });
     wrap.querySelectorAll('[data-preview]').forEach(b=>{
       b.onclick = ()=> window.open(`${location.pathname}?preview=${b.dataset.preview}`, '_blank');
@@ -786,7 +877,7 @@ async function renderFormView(id){
         <div class="cat-title"><span class="cat-num">${cat.id}</span>${esc(cat.title)}</div>
         <div class="opt-list">${opts}</div>
         <div class="note-field">
-          <input type="text" id="note${cat.id}" placeholder="${esc(cat.noteLabel)}（選填）" value="${esc(val.note)}">
+          <input type="text" id="note${cat.id}" placeholder="${esc(cat.noteLabel)}（若無請填「無」）" value="${esc(val.note)}">
         </div>
       </div>`;
   }).join("") : buildCategoryReadonlyHTML(doc);
@@ -795,7 +886,7 @@ async function renderFormView(id){
   if(editingAsInterviewer){
     commentsBlock = `
       <label style="margin-top:4px;">面試評論</label>
-      <textarea id="commentsInput" placeholder="請輸入面試評論…">${esc(doc.comments||"")}</textarea>`;
+      <textarea id="commentsInput" placeholder="請輸入面試評論（必填）…">${esc(doc.comments||"")}</textarea>`;
   } else {
     commentsBlock = `
       <label style="margin-top:4px;">面試評論</label>
@@ -831,6 +922,7 @@ async function renderFormView(id){
   }
 
   const hireCardHTML = editingAsInterviewer ? buildHireEditor(doc) : buildHireReadonly(doc);
+  const resumeCardHTML = editingAsInterviewer ? buildResumeEditor(doc) : buildResumeReadonly(doc);
 
   const signedRows = signedRowHTML(doc,'interviewer') + signedRowHTML(doc,'deptManager') + signedRowHTML(doc,'executive');
 
@@ -874,6 +966,7 @@ async function renderFormView(id){
       ${signedRows}
     </div>
     ${hireCardHTML}
+    ${resumeCardHTML}
     ${salaryCardHTML}
     ${completedNote}
     ${signSection}
@@ -881,6 +974,11 @@ async function renderFormView(id){
 
   if(editingAsInterviewer) wireSalaryEditor('sal');
   if(editingAsExecutive) wireSalaryEditor('salFinal');
+
+  if(editingAsInterviewer){
+    const resumeBtn = document.getElementById('resumeUploadBtn');
+    if(resumeBtn) resumeBtn.onclick = ()=>uploadResume(id);
+  }
 
   if(isEditableStage){
     const pad = setupSignaturePad(document.getElementById('sigPad'));
@@ -893,12 +991,14 @@ async function renderFormView(id){
 
 function gatherInterviewerForm(){
   const evaluations = {};
-  let missing = false;
+  let missingChoice = false;
+  let missingNote = false;
   CATEGORIES.forEach(cat=>{
     const checked = document.querySelector(`input[name="cat${cat.id}"]:checked`);
     const noteEl = document.getElementById(`note${cat.id}`);
     const note = noteEl ? noteEl.value.trim() : "";
-    if(!checked) missing = true;
+    if(!checked) missingChoice = true;
+    if(!note) missingNote = true;
     evaluations[cat.id] = {choice: checked ? parseInt(checked.value,10) : null, note};
   });
   const commentsEl = document.getElementById('commentsInput');
@@ -907,7 +1007,19 @@ function gatherInterviewerForm(){
   const hireDecision = hireChecked ? hireChecked.value : null;
   const startDateEl = document.getElementById('startDateInput');
   const startDate = startDateEl ? startDateEl.value : "";
-  return {evaluations, comments, hireDecision, startDate, missing};
+  const salary = readSalaryFromForm('sal');
+  return {evaluations, comments, hireDecision, startDate, salary, missingChoice, missingNote};
+}
+
+function validateInterviewerForm(g){
+  if(g.missingChoice) return "請完成全部 10 項評核項目（勾選選項）後再送出";
+  if(g.missingNote) return "每一項評核的說明欄都必須填寫，若無請填「無」";
+  if(!g.comments) return "請填寫面試評論";
+  if(!g.hireDecision) return "請選擇任用建議";
+  if(!g.startDate) return "請填寫正式上班日期";
+  if(g.salary.baseSalary === null || g.salary.baseSalary === '' || isNaN(g.salary.baseSalary)) return "請填寫本薪";
+  if(!g.salary.commitment) return "請填寫薪資承諾，若無請填「無」";
+  return null;
 }
 
 async function saveDraft(id, role){
@@ -921,7 +1033,7 @@ async function saveDraft(id, role){
       payload.comments = g.comments;
       payload.hireDecision = g.hireDecision;
       payload.startDate = g.startDate;
-      payload.salaryProposal = readSalaryFromForm('sal');
+      payload.salaryProposal = g.salary;
     } else if(role === 'executive'){
       payload.salaryFinal = readSalaryFromForm('salFinal');
     }
@@ -948,13 +1060,13 @@ async function submitStage(id, doc, pad){
 
   if(role === 'interviewer'){
     const gathered = gatherInterviewerForm();
-    if(gathered.missing){ toast("請完成全部 10 項評核項目後再送出"); return; }
-    if(!gathered.hireDecision){ toast("請選擇任用建議"); return; }
+    const errMsg = validateInterviewerForm(gathered);
+    if(errMsg){ toast(errMsg); return; }
     evaluations = gathered.evaluations;
     comments = gathered.comments;
     hireDecision = gathered.hireDecision;
     startDate = gathered.startDate;
-    salaryProposal = readSalaryFromForm('sal');
+    salaryProposal = gathered.salary;
   }
   if(role === 'executive'){
     salaryFinal = readSalaryFromForm('salFinal');
@@ -1027,6 +1139,7 @@ async function renderPreview(id){
       ${signedRows}
     </div>
     ${buildHireReadonly(doc)}
+    ${buildResumeReadonly(doc)}
     <div class="card">
       <h2 class="serif" style="margin-top:0;font-size:16px;">薪資</h2>
       ${salaryHTML}
@@ -1089,6 +1202,7 @@ async function printRecord(id){
       <span>應徵部門：${esc(d.department)}</span>
       <span>應徵職務：${esc(d.position)}</span>
       <span>面談日期：${esc(d.interviewDate)}</span>
+      ${d.resumeFileName ? `<span>履歷：${esc(d.resumeFileName)}（電子檔請於系統內查看）</span>` : ``}
     </div>
     <div class="p-grid">${cells}</div>
     <div class="p-comment">
@@ -1122,10 +1236,11 @@ async function printRecord(id){
   setTimeout(()=>window.print(), 80);
 }
 
-/* 量測內容高度，若超過一張 A4 就整體等比縮小，確保不會被切成第 2 頁 */
+/* 量測內容高度，若超過一張 A4 就整體等比縮小（用 zoom 讓瀏覽器真的重新排版，
+   避免用 transform 只是視覺縮小、但列印分頁仍照原始高度計算而被切到第 2 頁） */
 function fitPrintAreaToA4(){
   const el = document.getElementById('printArea');
-  el.style.transform = 'none';
+  el.style.zoom = 1;
   el.style.display = 'block';
   el.style.position = 'fixed';
   el.style.left = '-10000px';
@@ -1133,8 +1248,9 @@ function fitPrintAreaToA4(){
   const mmToPx = 96/25.4;
   const pageHeightPx = 297 * mmToPx;
   const contentHeightPx = el.scrollHeight;
-  const scale = contentHeightPx > pageHeightPx ? (pageHeightPx / contentHeightPx) : 1;
-  el.style.transform = scale < 1 ? `scale(${scale})` : 'none';
+  let scale = contentHeightPx > pageHeightPx ? (pageHeightPx / contentHeightPx) : 1;
+  if(scale < 1) scale = scale * 0.96; // 留一點安全邊界，避免四捨五入還是超出
+  el.style.zoom = scale;
   el.style.display = '';
   el.style.position = '';
   el.style.left = '';
