@@ -663,6 +663,7 @@ function renderAdminDashboard(){
         <button class="btn-primary" id="createBtn">建立並產生連結</button>
         <button class="btn-ghost" id="cancelEditBtn" style="display:none;">取消編輯</button>
       </div>
+      <div id="editResumeSection"></div>
     </div>
     <div class="card">
       <h2 class="serif" style="margin-top:0;font-size:17px;">所有紀錄</h2>
@@ -691,6 +692,18 @@ async function editRecord(id){
     document.getElementById('createBtn').textContent = "儲存修改";
     document.getElementById('createBtn').onclick = saveEditedRecord;
     document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    document.getElementById('editResumeSection').innerHTML = `
+      <div class="divider"></div>
+      <label>應徵者履歷</label>
+      ${d.resumeURL
+        ? `<div class="signed-block" style="margin-bottom:10px;"><a href="${d.resumeURL}" target="_blank" rel="noopener">📄 ${esc(d.resumeFileName||'目前已上傳的履歷')}</a></div>`
+        : `<p class="muted" style="margin-top:0;">尚未上傳履歷。</p>`}
+      <input type="file" id="resumeFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+        <button class="btn-ghost" id="resumeUploadBtn" type="button">上傳／更新履歷</button>
+        <span class="muted" id="resumeStatus"></span>
+      </div>`;
+    document.getElementById('resumeUploadBtn').onclick = ()=>uploadResume(id).then(()=>editRecord(id));
     window.scrollTo({top:0, behavior:'smooth'});
   }catch(err){
     console.error(err);
