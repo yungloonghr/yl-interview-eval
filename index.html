@@ -18,6 +18,9 @@
          match /interviews/{docId} {
            allow read, write: if true; // 內部連結分享使用，如需更嚴謹可加驗證
          }
+         match /salaryItems/{itemId} {
+           allow read, write: if true; // 薪資自訂項目清單（後台「薪資項目管理」新增/刪除）
+         }
        }
      }
 
@@ -234,6 +237,20 @@
   .salary-total{border-top:1px solid var(--line);padding-top:10px;font-size:15px;font-weight:700;text-align:right;}
   .salary-total b{color:var(--brass-deep);}
 
+  /* ---- Salary: per-record custom items + remove button ---- */
+  .sal-item-custom{gap:8px;}
+  .sal-custom-label{flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff;margin-left:0;}
+  .sal-item-custom .sal-amt{margin-left:0;}
+  .sal-remove-btn{border:none;background:none;color:var(--seal);font-size:17px;line-height:1;cursor:pointer;padding:2px 6px;flex:none;}
+  .sal-remove-btn:hover{opacity:.6;}
+  .sal-add-row{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;}
+  .sal-add-row input[type=text]{flex:1;min-width:140px;}
+  .sal-add-row input[type=number]{max-width:180px;}
+
+  /* ---- Salary item admin (後台自訂項目管理) ---- */
+  .salary-item-admin-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:7px;background:#FCFBF8;font-size:13.5px;}
+  .salary-item-admin-row .item-name{flex:1;font-weight:600;}
+
   /* ---- Signature pad ---- */
   .sig-box{
     border:1.5px dashed var(--line);
@@ -401,14 +418,38 @@ const SALARY_VARIABLE = [
 function emptySalary(){
   const items = {};
   SALARY_VARIABLE.forEach(v => items[v.key] = {checked:false, amount:v.amount});
-  return {baseSalary: null, items, commitment: ""};
+  return {baseSalary: null, items, customItems: [], commitment: ""};
 }
+
+/* 後台可隨時新增／刪除的薪資項目（存於 Firestore salaryItems 集合），
+   會自動併入下方所有薪資計算與顯示，跟寫死在 SALARY_VARIABLE 裡的項目一視同仁。 */
+let DYNAMIC_SALARY_ITEMS = [];
+async function loadDynamicSalaryItems(){
+  try{
+    const snap = await db.collection('salaryItems').orderBy('order','asc').get();
+    DYNAMIC_SALARY_ITEMS = snap.docs.map(d=>{
+      const v = d.data();
+      return {key:d.id, label:v.label, amount:(v.amount!=null ? v.amount : null)};
+    });
+  }catch(err){
+    console.error('讀取薪資項目設定失敗：', err);
+    DYNAMIC_SALARY_ITEMS = [];
+  }
+  return DYNAMIC_SALARY_ITEMS;
+}
+function allSalaryDefs(){
+  return SALARY_VARIABLE.concat(DYNAMIC_SALARY_ITEMS);
+}
+
 function calcSalaryTotal(sal){
   if(!sal) return 0;
   let t = (Number(sal.baseSalary)||0) + MEAL_ALLOWANCE;
-  SALARY_VARIABLE.forEach(v=>{
+  allSalaryDefs().forEach(v=>{
     const it = sal.items && sal.items[v.key];
     if(it && it.checked) t += (Number(it.amount)||0);
+  });
+  (sal.customItems||[]).forEach(it=>{
+    if(it.checked) t += (Number(it.amount)||0);
   });
   return t;
 }
@@ -417,7 +458,7 @@ function fmtMoney(n){ return "NT$ " + (Number(n)||0).toLocaleString('zh-TW'); }
 function buildSalaryEditor(sal, prefix, required){
   sal = sal || emptySalary();
   const mark = required ? `<span class="req-mark">*</span>` : ``;
-  const rows = SALARY_VARIABLE.map(v=>{
+  const rows = allSalaryDefs().map(v=>{
     const it = (sal.items && sal.items[v.key]) || {checked:false, amount:v.amount};
     const isCustom = v.amount === null;
     return `
@@ -426,9 +467,18 @@ function buildSalaryEditor(sal, prefix, required){
         <span>${esc(v.label)}</span>
         ${isCustom
           ? `<input type="number" class="sal-amt" id="${prefix}_amt_${v.key}" placeholder="金額" value="${it.amount!=null?it.amount:''}">`
-          : `<span class="sal-fixed-amt">NT$ ${v.amount.toLocaleString('zh-TW')}</span>`}
+          : `<span class="sal-fixed-amt">NT$ ${Number(v.amount).toLocaleString('zh-TW')}</span>`}
       </label>`;
   }).join("");
+
+  const customItems = sal.customItems || [];
+  const customRows = customItems.map(it=>`
+    <label class="sal-item sal-item-custom">
+      <input type="checkbox" class="sal-custom-chk" ${it.checked?'checked':''}>
+      <input type="text" class="sal-custom-label" placeholder="項目名稱" value="${esc(it.label||'')}">
+      <input type="number" class="sal-amt sal-custom-amt" placeholder="金額" value="${it.amount!=null?it.amount:''}">
+      <button type="button" class="sal-remove-btn" title="刪除此項目">✕</button>
+    </label>`).join("");
 
   return `
     <div class="salary-block" id="${prefix}_block">
@@ -438,7 +488,9 @@ function buildSalaryEditor(sal, prefix, required){
       </div>
       <div class="salary-variable">
         <label>變動項目（勾選適用項目）</label>
-        <div class="sal-item-list">${rows}</div>
+        <div class="sal-item-list" id="${prefix}_item_list">${rows}</div>
+        <div class="sal-item-list" id="${prefix}_custom_list" style="${customRows?'margin-top:8px;':''}">${customRows}</div>
+        <button type="button" class="btn-ghost" id="${prefix}_addCustomBtn" style="margin-top:10px;padding:7px 14px;font-size:12.5px;">＋ 新增這筆的專屬項目</button>
       </div>
       <div class="salary-variable">
         <label for="${prefix}_commitment">薪資承諾${mark}（例如：年薪保障14個月；若無請填「無」）</label>
@@ -455,13 +507,42 @@ function wireSalaryEditor(prefix){
     const totalEl = document.getElementById(`${prefix}_total`);
     if(totalEl) totalEl.textContent = fmtMoney(calcSalaryTotal(sal));
   };
-  block.querySelectorAll('input').forEach(inp => inp.addEventListener('input', recalc));
+  block.addEventListener('input', recalc);
+  block.addEventListener('change', recalc);
+
+  const addBtn = document.getElementById(`${prefix}_addCustomBtn`);
+  if(addBtn){
+    addBtn.onclick = ()=>{
+      const list = document.getElementById(`${prefix}_custom_list`);
+      list.style.marginTop = '8px';
+      const row = document.createElement('label');
+      row.className = 'sal-item sal-item-custom';
+      row.innerHTML = `
+        <input type="checkbox" class="sal-custom-chk" checked>
+        <input type="text" class="sal-custom-label" placeholder="項目名稱">
+        <input type="number" class="sal-amt sal-custom-amt" placeholder="金額">
+        <button type="button" class="sal-remove-btn" title="刪除此項目">✕</button>`;
+      list.appendChild(row);
+      const labelInput = row.querySelector('.sal-custom-label');
+      if(labelInput) labelInput.focus();
+      recalc();
+    };
+  }
+
+  block.addEventListener('click', e=>{
+    const btn = e.target.closest('.sal-remove-btn');
+    if(btn){
+      const row = btn.closest('.sal-item-custom');
+      if(row) row.remove();
+      recalc();
+    }
+  });
 }
 function readSalaryFromForm(prefix){
   const baseEl = document.getElementById(`${prefix}_base`);
   const base = baseEl ? baseEl.value : '';
   const items = {};
-  SALARY_VARIABLE.forEach(v=>{
+  allSalaryDefs().forEach(v=>{
     const chk = document.getElementById(`${prefix}_chk_${v.key}`);
     let amount = v.amount;
     if(v.amount === null){
@@ -470,17 +551,34 @@ function readSalaryFromForm(prefix){
     }
     items[v.key] = {checked: chk ? chk.checked : false, amount};
   });
+  const customItems = [];
+  const customList = document.getElementById(`${prefix}_custom_list`);
+  if(customList){
+    customList.querySelectorAll('.sal-item-custom').forEach(row=>{
+      const chk = row.querySelector('.sal-custom-chk');
+      const labelEl = row.querySelector('.sal-custom-label');
+      const amtEl = row.querySelector('.sal-custom-amt');
+      const label = labelEl ? labelEl.value.trim() : '';
+      const amtVal = amtEl && amtEl.value !== '' ? Number(amtEl.value) : null;
+      if(label || amtVal !== null){
+        customItems.push({label, amount: amtVal, checked: chk ? chk.checked : false});
+      }
+    });
+  }
   const commitEl = document.getElementById(`${prefix}_commitment`);
   const commitment = commitEl ? commitEl.value.trim() : '';
-  return {baseSalary: base !== '' ? Number(base) : null, items, commitment};
+  return {baseSalary: base !== '' ? Number(base) : null, items, customItems, commitment};
 }
 function buildSalaryReadonly(sal){
   sal = sal || emptySalary();
-  const checkedItems = SALARY_VARIABLE.filter(v => sal.items && sal.items[v.key] && sal.items[v.key].checked);
-  const rows = checkedItems.map(v=>{
+  const checkedItems = allSalaryDefs().filter(v => sal.items && sal.items[v.key] && sal.items[v.key].checked);
+  let rowsHTML = checkedItems.map(v=>{
     const amt = sal.items[v.key].amount;
     return `<div class="salary-row"><span>${esc(v.label)}</span><span class="sal-fixed-amt">NT$ ${(Number(amt)||0).toLocaleString('zh-TW')}</span></div>`;
-  }).join("") || `<p class="muted" style="margin:4px 0;">（無勾選變動項目）</p>`;
+  }).join("");
+  const checkedCustom = (sal.customItems||[]).filter(it => it.checked && (it.label || it.amount));
+  rowsHTML += checkedCustom.map(it=>`<div class="salary-row"><span>${esc(it.label||'（未命名項目）')}</span><span class="sal-fixed-amt">NT$ ${(Number(it.amount)||0).toLocaleString('zh-TW')}</span></div>`).join("");
+  if(!rowsHTML) rowsHTML = `<p class="muted" style="margin:4px 0;">（無勾選變動項目）</p>`;
 
   return `
     <div class="salary-block">
@@ -488,7 +586,7 @@ function buildSalaryReadonly(sal){
         <div class="salary-row"><span>本薪</span><span class="sal-fixed-amt">${sal.baseSalary!=null? 'NT$ '+Number(sal.baseSalary).toLocaleString('zh-TW') : '<span class="unanswered">未填寫</span>'}</span></div>
         <div class="salary-row"><span>伙食費</span><span class="sal-fixed-amt">NT$ ${MEAL_ALLOWANCE.toLocaleString('zh-TW')}（固定）</span></div>
       </div>
-      <div class="salary-variable">${rows}</div>
+      <div class="salary-variable">${rowsHTML}</div>
       ${sal.commitment ? `<div class="salary-variable"><label>薪資承諾</label><div style="white-space:pre-wrap;background:#F4F2EC;border-radius:7px;padding:10px 12px;font-size:13.5px;">${esc(sal.commitment)}</div></div>` : ``}
       <div class="salary-total">建議月薪合計：<b>${fmtMoney(calcSalaryTotal(sal))}</b></div>
     </div>`;
@@ -680,6 +778,16 @@ function renderAdminDashboard(){
       <div id="editResumeSection"></div>
     </div>
     <div class="card">
+      <h2 class="serif" style="margin-top:0;font-size:17px;">薪資項目管理</h2>
+      <p class="muted" style="margin-top:0;">在此新增的項目，會自動出現在之後所有面談紀錄的「建議錄取薪資」勾選清單中；金額留空表示每次面談時再填寫。刪除項目不會影響已經送出的紀錄。</p>
+      <div id="salaryItemsWrap" class="muted">載入中…</div>
+      <div class="sal-add-row">
+        <input type="text" id="newSalItemLabel" placeholder="項目名稱（例如：久任獎金）">
+        <input type="number" id="newSalItemAmount" placeholder="固定金額（留空表示每次填寫）">
+        <button class="btn-ghost" id="addSalItemBtn" type="button">＋ 新增項目</button>
+      </div>
+    </div>
+    <div class="card">
       <h2 class="serif" style="margin-top:0;font-size:17px;">所有紀錄</h2>
       <div id="listWrap" class="muted">載入中…</div>
     </div>`;
@@ -687,7 +795,80 @@ function renderAdminDashboard(){
   document.getElementById('nDate').valueAsDate = new Date();
   document.getElementById('createBtn').onclick = createRecord;
   document.getElementById('cancelEditBtn').onclick = ()=>{ editingRecordId = null; renderAdminDashboard(); };
+  document.getElementById('addSalItemBtn').onclick = addSalaryItemDef;
+  document.getElementById('newSalItemLabel').addEventListener('keydown', e=>{
+    if(e.key === 'Enter') addSalaryItemDef();
+  });
+  renderSalaryItemsCard();
   loadList();
+}
+
+/* ============ 薪資項目管理（後台，隨時新增／刪除，不需改程式碼） ============ */
+async function renderSalaryItemsCard(){
+  const wrap = document.getElementById('salaryItemsWrap');
+  if(!wrap) return;
+  wrap.innerHTML = `<p class="muted" style="margin:4px 0;">載入中…</p>`;
+  try{
+    const snap = await db.collection('salaryItems').orderBy('order','asc').get();
+    if(snap.empty){
+      wrap.innerHTML = `<p class="muted" style="margin:4px 0;">尚未新增自訂薪資項目。</p>`;
+      return;
+    }
+    let rows = "";
+    snap.forEach(doc=>{
+      const d = doc.data();
+      const amtLabel = d.amount!=null ? `NT$ ${Number(d.amount).toLocaleString('zh-TW')}（固定）` : `面談時填寫金額`;
+      rows += `
+        <div class="salary-item-admin-row">
+          <span class="item-name">${esc(d.label)}</span>
+          <span class="muted">${amtLabel}</span>
+          <button class="sal-remove-btn" data-del-item="${doc.id}" type="button" title="刪除此項目">✕</button>
+        </div>`;
+    });
+    wrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>`;
+    wrap.querySelectorAll('[data-del-item]').forEach(b=>{
+      b.onclick = ()=>deleteSalaryItemDef(b.dataset.delItem);
+    });
+  }catch(err){
+    console.error(err);
+    wrap.innerHTML = `<p class="muted" style="margin:4px 0;">載入失敗，請確認 Firebase 設定是否正確</p>`;
+  }
+}
+async function addSalaryItemDef(){
+  const labelEl = document.getElementById('newSalItemLabel');
+  const amtEl = document.getElementById('newSalItemAmount');
+  const label = labelEl.value.trim();
+  if(!label){ toast("請輸入項目名稱"); return; }
+  const amount = amtEl.value !== '' ? Number(amtEl.value) : null;
+  const btn = document.getElementById('addSalItemBtn');
+  btn.disabled = true;
+  try{
+    const lastSnap = await db.collection('salaryItems').orderBy('order','desc').limit(1).get();
+    const nextOrder = lastSnap.empty ? 0 : (Number(lastSnap.docs[0].data().order)||0) + 1;
+    await db.collection('salaryItems').add({
+      label, amount, order: nextOrder,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    labelEl.value = ''; amtEl.value = '';
+    toast("已新增薪資項目");
+    renderSalaryItemsCard();
+  }catch(err){
+    console.error(err);
+    toast("新增失敗，請確認網路連線或 Firebase 設定");
+  } finally {
+    btn.disabled = false;
+  }
+}
+async function deleteSalaryItemDef(id){
+  if(!confirm("確定要刪除這個薪資項目嗎？之後的表單將不再顯示此選項（已送出的紀錄不受影響）。")) return;
+  try{
+    await db.collection('salaryItems').doc(id).delete();
+    toast("已刪除");
+    renderSalaryItemsCard();
+  }catch(err){
+    console.error(err);
+    toast("刪除失敗，請確認網路連線或 Firebase 設定");
+  }
 }
 
 let editingRecordId = null;
@@ -931,6 +1112,7 @@ async function renderFormView(id){
     app.innerHTML = `<div class="card">載入失敗，請確認 Firebase 設定是否正確。</div>`;
     return;
   }
+  await loadDynamicSalaryItems();
 
   const stageIdx = STAGE_ORDER.indexOf(doc.status);
   const stepper = ["interviewer","unitManager","deptManager","executive","generalAffairs"].map((s,i)=>{
@@ -1198,6 +1380,7 @@ async function renderPreview(id){
     app.innerHTML = `<div class="card">載入失敗，請確認 Firebase 設定是否正確。</div>`;
     return;
   }
+  await loadDynamicSalaryItems();
 
   const stageIdx = STAGE_ORDER.indexOf(doc.status);
   const stepper = ["interviewer","unitManager","deptManager","executive","generalAffairs"].map((s,i)=>{
@@ -1248,10 +1431,15 @@ function buildSalaryPrintLines(sal){
   let lines = [];
   lines.push(`<div class="p-opt on">本薪：${sal.baseSalary!=null ? Number(sal.baseSalary).toLocaleString('zh-TW') : '未填寫'} 元</div>`);
   lines.push(`<div class="p-opt on">伙食費：${MEAL_ALLOWANCE.toLocaleString('zh-TW')} 元（固定）</div>`);
-  SALARY_VARIABLE.forEach(v=>{
+  allSalaryDefs().forEach(v=>{
     const it = sal.items && sal.items[v.key];
     if(it && it.checked){
       lines.push(`<div class="p-opt on">${esc(v.label)}：${(Number(it.amount)||0).toLocaleString('zh-TW')} 元</div>`);
+    }
+  });
+  (sal.customItems||[]).forEach(it=>{
+    if(it.checked && (it.label || it.amount)){
+      lines.push(`<div class="p-opt on">${esc(it.label||'未命名項目')}：${(Number(it.amount)||0).toLocaleString('zh-TW')} 元</div>`);
     }
   });
   lines.push(`<div class="p-opt on" style="margin-top:4px;"><b>合計：${calcSalaryTotal(sal).toLocaleString('zh-TW')} 元</b></div>`);
@@ -1265,6 +1453,7 @@ async function printRecord(id){
   const snap = await db.collection('interviews').doc(id).get();
   if(!snap.exists){ toast("找不到紀錄"); return; }
   const d = snap.data();
+  await loadDynamicSalaryItems();
 
   const cells = CATEGORIES.map(cat=>{
     const val = (d.evaluations && d.evaluations[cat.id]) || {choice:null, note:""};
